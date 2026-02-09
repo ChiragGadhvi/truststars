@@ -39,7 +39,7 @@ export async function updateProfile(formData: {
   const { error: publicError } = await supabase
     .from('users')
     .update({
-      full_name: formData.full_name,
+      display_name: formData.full_name,
       website_url: formData.website,
       twitter_handle: formData.twitter,
       linkedin_url: formData.linkedin,

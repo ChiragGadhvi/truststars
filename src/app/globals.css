@@ -60,4 +60,17 @@
   html {
     scroll-behavior: smooth !important;
   }
+
+  /* Remove scrollbar globally */
+  ::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+  }
+
+  * {
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
+  }
 }

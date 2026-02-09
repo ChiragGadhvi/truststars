@@ -5,7 +5,7 @@ import { updateProfile } from '@/actions/user'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Loader2, User, Globe, Link as LinkIcon, Save, Check } from 'lucide-react'
+import { Loader2, User, Globe, Check, Save } from 'lucide-react'
 import Image from 'next/image'
 
 interface ProfileData {
@@ -46,7 +46,7 @@ export default function ProfileForm({ initialData }: { initialData: ProfileData 
         bio: formData.bio
       })
 
-      if (result.error) {
+      if (result && result.error) {
         setError(result.error)
       } else {
         setSuccess(true)
@@ -93,14 +93,101 @@ export default function ProfileForm({ initialData }: { initialData: ProfileData 
 
       <form onSubmit={handleSubmit} className="space-y-8">
         
-        {/* ... form fields ... */}
-
         <div className="grid gap-6 md:grid-cols-2">
-           {/* ... */}
+          {/* Full Name */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Full Name</label>
+            <Input 
+              name="full_name" 
+              value={formData.full_name || ''} 
+              onChange={handleChange} 
+              placeholder="e.g. John Doe" 
+            />
+          </div>
+
+          {/* Username */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Username</label>
+             <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">@</span>
+              <Input 
+                name="username" 
+                value={formData.username || ''} 
+                onChange={handleChange} 
+                className="pl-7" 
+                placeholder="username" 
+              />
+            </div>
+          </div>
         </div>
-        
-        {/* ... Bio, Socials ... */}
-        
+
+        {/* Bio */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Bio</label>
+          <Textarea 
+            name="bio" 
+            value={formData.bio || ''} 
+            onChange={handleChange} 
+            placeholder="Tell us about yourself or your company..." 
+            className="min-h-[100px]"
+            maxLength={160}
+          />
+          <div className="text-right text-xs text-muted-foreground">
+            {(formData.bio?.length || 0)}/160
+          </div>
+        </div>
+
+        <div className="space-y-4">
+           <h3 className="text-lg font-semibold border-b border-border/50 pb-2">Social Links</h3>
+           
+           <div className="grid gap-6 md:grid-cols-2">
+              {/* Website */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2">
+                  <Globe className="w-3.5 h-3.5" /> Website
+                </label>
+                <Input 
+                  name="website" 
+                  value={formData.website || ''} 
+                  onChange={handleChange} 
+                  placeholder="https://example.com" 
+                />
+              </div>
+
+               {/* Twitter */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2">
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zl-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                  Twitter / X
+                </label>
+                 <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">@</span>
+                  <Input 
+                    name="twitter" 
+                    value={formData.twitter || ''} 
+                    onChange={handleChange} 
+                    className="pl-7" 
+                    placeholder="handle" 
+                  />
+                </div>
+              </div>
+
+               {/* LinkedIn */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2">
+                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M20.5 2h-17A1.5 1.5 0 002 3.5v17A1.5 1.5 0 003.5 22h17a1.5 1.5 0 001.5-1.5v-17A1.5 1.5 0 0020.5 2zM8 19H5v-9h3zM6.5 8.25A1.75 1.75 0 118.3 6.5a1.78 1.78 0 01-1.8 1.75zM19 19h-3v-4.74c0-1.21-.43-1.56-1.1-1.56-.91 0-1.96.77-1.96 2v4.3h-3v-9h3v1.2c.5-.76 1.38-1.46 3-1.46C18.66 9.75 19 11.23 19 14z"/></svg>
+                   LinkedIn
+                </label>
+                <Input 
+                  name="linkedin" 
+                  value={formData.linkedin || ''} 
+                  onChange={handleChange} 
+                  placeholder="https://linkedin.com/in/..." 
+                />
+              </div>
+           </div>
+        </div>
+
         <div className="flex items-center gap-4 pt-4">
           <Button 
             type="submit" 

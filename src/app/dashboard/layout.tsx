@@ -56,7 +56,7 @@ export default function DashboardLayout({
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b border-border">
         <div className="flex items-center justify-between p-4">
           <Link href="/" className="flex items-center gap-2">
-            <Image src="/truststars.png" alt="TrustStars" width={32} height={32} className="rounded-lg" />
+            <Image src="/web-app-manifest-192x192.png" alt="TrustStars" width={32} height={32} className="rounded-lg" />
             <span className="text-lg font-bold">TrustStars</span>
           </Link>
           <button 
@@ -144,7 +144,7 @@ export default function DashboardLayout({
           {/* Logo */}
           <div className="p-6 border-b border-border/10">
             <Link href="/" className="flex items-center gap-3">
-              <Image src="/truststars.png" alt="TrustStars" width={40} height={40} className="rounded-lg shadow-sm" />
+              <Image src="/web-app-manifest-192x192.png" alt="TrustStars" width={40} height={40} className="rounded-lg shadow-sm" />
               <span className="text-xl font-bold">TrustStars</span>
             </Link>
           </div>

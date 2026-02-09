@@ -19,7 +19,7 @@ export default async function ProfilePage() {
   const p: any = publicProfile || {}
 
   const initialData = {
-    full_name: m.full_name || p.full_name || '',
+    full_name: m.full_name || p.display_name || p.full_name || '',
     username: m.username || m.user_name || p.username || '',
     website: m.website || p.website_url || '',
     twitter: m.twitter || p.twitter_handle || '',

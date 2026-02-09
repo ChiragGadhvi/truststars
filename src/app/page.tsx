@@ -92,7 +92,7 @@ export default function Home() {
           {/* Hero Section */}
           <div className="text-center mb-16 animate-in fade-in slide-in-from-bottom-4 duration-500 relative z-20">
             <div className="inline-flex items-center gap-3 mb-6">
-              <Image src="/truststars.png" alt="TrustStars" width={60} height={60} className="rounded-lg shadow-sm" />
+              <Image src="/web-app-manifest-192x192.png" alt="TrustStars" width={60} height={60} className="rounded-lg shadow-sm" />
               <span className="text-2xl font-bold tracking-tight">TrustStars</span>
             </div>
             
@@ -311,8 +311,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Footer */}
-          <Footer />
+
         </div>
       </main>
     </div>
