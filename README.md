@@ -1,36 +1,41 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+# TrustStars.dev
 
-First, run the development server:
+TrustStars is a public database of VERIFIED GitHub repositories and developer profiles.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Setup
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. **Environment Variables**:
+   Copy `.env.local` or create it with:
+   ```bash
+   NEXT_PUBLIC_SUPABASE_URL=YOUR_SUPABASE_URL
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+   SUPABASE_SERVICE_ROLE_KEY=YOUR_SUPABASE_SERVICE_ROLE_KEY # Optional for cron
+   GITHUB_TOKEN=YOUR_GITHUB_TOKEN # Optional for cron rate limits
+   CRON_SECRET=YOUR_CRON_SECRET # Optional for cron protection
+   ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+2. **Supabase Setup**:
+   - Go to Supabase Project > Authentication > Providers > GitHub.
+   - Enable GitHub.
+   - Copy client ID and client Secret from GitHub OAuth App.
+   - Set Redirect URL to `[YOUR_APP_URL]/auth/callback` (e.g. `http://localhost:3000/auth/callback`).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. **Run Development Server**:
+   ```bash
+   npm run dev
+   ```
 
-## Learn More
+## Features
 
-To learn more about Next.js, take a look at the following resources:
+- **Authentication**: Sign in with GitHub.
+- **Dashboard**: Add repositories you maintain (verified via GitHub API).
+- **Public Profiles**: `/dev/[username]` showing verified stats.
+- **Repository Profiles**: `/repo/[owner]/[repo]` showing charts.
+- **Leaderboard**: `/leaderboard` ranking top verified repos.
+- **Cron Job**: `/api/cron` for daily sync.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deployment
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Deploy on Vercel or similar platform.
+Remember to set environment variables in your deployment platform.
