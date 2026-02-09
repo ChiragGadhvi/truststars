@@ -35,7 +35,12 @@ export async function listMyRepos(providerToken: string) {
     })
 
     if (!res.ok) {
-       console.error("GitHub API error:", await res.text())
+       const errorText = await res.text()
+       // Don't spam console if it's just auth error
+       if (res.status === 401) {
+          return { error: 'Bad credentials' }
+       }
+       console.error("GitHub API error:", errorText)
        return { error: 'Failed to fetch repositories from GitHub' }
     }
 

@@ -73,10 +73,12 @@ export function AddRepoModal({ onRepoAdded, children }: { onRepoAdded?: () => vo
       if (session.provider_token) {
         const result: any = await listMyRepos(session.provider_token)
         if (result.error) {
-           // If error is related to token, might need re-auth, but usually it's just empty or connection
-           // Assume needs github if token is invalid
-           if (result.error === "No provider token found") setNeedsGithub(true)
-           else setRepos([]) // Just empty for other errors
+           // If error is related to token, might need re-auth
+           if (result.error === "No provider token found" || result.error.includes("Bad credentials") || result.error.includes("401")) { 
+             setNeedsGithub(true)
+           } else {
+             setRepos([]) 
+           }
         } else {
           setRepos(result.data || [])
         }
