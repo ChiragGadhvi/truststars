@@ -40,6 +40,7 @@ export async function updateProfile(formData: {
     .from('users')
     .update({
       display_name: formData.full_name,
+      github_username: formData.username,
       website_url: formData.website,
       twitter_handle: formData.twitter,
       linkedin_url: formData.linkedin,
