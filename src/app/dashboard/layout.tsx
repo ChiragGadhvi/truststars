@@ -127,12 +127,22 @@ export default function DashboardLayout({
                   <div className="text-sm font-medium truncate">{user.email}</div>
                 </div>
               </div>
-              <form action={signOut}>
-                <Button variant="outline" size="sm" className="w-full text-xs">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full text-xs"
+                  onClick={async () => {
+                    const supabase = createClient()
+                    await supabase.auth.signOut()
+                    setUser(null)
+                    setMobileMenuOpen(false)
+                    router.refresh()
+                    router.push('/')
+                  }}
+                >
                   <LogOut className="h-3 w-3 mr-2" />
                   Log out
                 </Button>
-              </form>
             </div>
           </motion.div>
         )}
@@ -198,12 +208,21 @@ export default function DashboardLayout({
                 <div className="text-sm font-medium truncate">{user.email}</div>
               </div>
             </div>
-            <form action={signOut}>
-              <Button variant="outline" size="sm" className="w-full text-xs">
-                <LogOut className="h-3 w-3 mr-2" />
-                Log out
-              </Button>
-            </form>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full text-xs"
+              onClick={async () => {
+                const supabase = createClient()
+                await supabase.auth.signOut()
+                setUser(null)
+                router.refresh()
+                router.push('/')
+              }}
+            >
+              <LogOut className="h-3 w-3 mr-2" />
+              Log out
+            </Button>
           </div>
         </aside>
 

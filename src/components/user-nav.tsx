@@ -14,12 +14,21 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
-import { signOut } from '@/actions/auth'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
 
 export function UserNav({ user }: { user: any }) {
+  const router = useRouter()
   const username = user.user_metadata?.user_name || user.user_metadata?.name || 'User'
   const email = user.email
+
+  const handleSignOut = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.refresh()
+    router.push('/')
+  }
 
   return (
     <DropdownMenu>
@@ -48,7 +57,7 @@ export function UserNav({ user }: { user: any }) {
           <Link href="/dashboard">Add Repository</Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => signOut()}>
+        <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
           Log out
         </DropdownMenuItem>
       </DropdownMenuContent>

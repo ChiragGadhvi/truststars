@@ -13,12 +13,28 @@ export default function DashboardButton() {
   const pathname = usePathname()
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const supabase = createClient()
+    const supabase = createClient()
+    
+    // Check initial user
+    const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
     }
-    fetchUser()
+    checkUser()
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // Immediately set user to null on sign out even if session might linger slightly
+      if (event === 'SIGNED_OUT') {
+        setUser(null)
+      } else {
+        setUser(session?.user ?? null)
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
   }, [])
 
   // Hide on dashboard pages

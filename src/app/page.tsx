@@ -7,7 +7,7 @@ import Image from 'next/image'
 import Footer from '@/components/footer'
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { signInWithGoogle } from '@/actions/auth'
+
 import { motion, AnimatePresence } from 'framer-motion'
 import { AddRepoModal } from '@/components/add-repo-modal'
 import {
@@ -53,7 +53,7 @@ export default function Home() {
     const { data: { user } } = await supabase.auth.getUser()
     setUser(user)
 
-    // Fetch top 10 repos
+    // Fetch top repos sorted by Activity Score
     const { data } = await supabase
       .from('repositories')
       .select(`
@@ -62,8 +62,8 @@ export default function Home() {
           users(github_username, avatar_url)
         )
       `)
-      .order('stars', { ascending: false })
-      .limit(10)
+      .order('activity_score', { ascending: false })
+      .limit(20)
 
     setRepos(data || [])
     setLoading(false)
@@ -96,9 +96,13 @@ export default function Home() {
               <span className="text-2xl font-bold tracking-tight">TrustStars</span>
             </div>
             
-            <h1 className="text-4xl md:text-5xl font-extrabold mb-8 tracking-tight">
-              The database of verified GitHub repositories
+            <h1 className="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight">
+              Most Actively Worked-On Open Source Projects
             </h1>
+            <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+              Discover where developers are actually spending their time right now.
+              Ranked by real-world activity, not just stars.
+            </p>
 
             {/* Search Bar with Dropdown & Buttons */}
             <div className="max-w-2xl mx-auto mb-6 relative">
@@ -107,11 +111,10 @@ export default function Home() {
                   <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                   <input
                     type="text"
-                    placeholder="Search repositories..."
+                    placeholder="Search for active projects..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     onFocus={() => setShowResults(!!searchTerm)}
-                    // OnBlur logic can be tricky with click handling, usually handled by clicking outside
                     className="w-full pl-10 pr-4 py-2.5 bg-card/80 backdrop-blur-sm border border-border/50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
                   />
                   
@@ -166,21 +169,6 @@ export default function Home() {
                 <AddRepoModal onRepoAdded={fetchLeaderboard} />
               </div>
             </div>
-
-            {/* Sign In Button (only if not logged in) */}
-            {!loading && !user && (
-              <form action={signInWithGoogle} className="animate-in fade-in zoom-in duration-300 relative z-10">
-                <Button type="submit" size="sm" className="text-xs bg-white text-black hover:bg-gray-200 transition-all shadow-sm font-semibold h-9 px-4">
-                  <svg className="mr-2 h-3.5 w-3.5" viewBox="0 0 24 24">
-                    <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                    <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                  </svg>
-                  Sign in with Google
-                </Button>
-              </form>
-            )}
             
             {/* Click overlay to close search */}
             {showResults && (
@@ -189,113 +177,118 @@ export default function Home() {
           </div>
 
           <div className="flex items-center justify-between mb-6 px-1 relative z-10">
-             <h2 className="text-lg font-semibold tracking-tight">Leaderboard</h2>
+             <h2 className="text-lg font-semibold tracking-tight">Top Active Projects</h2>
              
              <div className="flex items-center gap-2">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm" className="h-8 gap-1 text-xs border-border/30 bg-card/50 shadow-sm">
-                      All time <ChevronDown className="h-3 w-3 opacity-50" />
+                      Last 30 days <ChevronDown className="h-3 w-3 opacity-50" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-32">
-                    <DropdownMenuItem>All time</DropdownMenuItem>
-                    <DropdownMenuItem>This month</DropdownMenuItem>
-                    <DropdownMenuItem>This week</DropdownMenuItem>
+                    <DropdownMenuItem disabled className="text-muted-foreground/50">Last 7 days (Soon)</DropdownMenuItem>
+                    <DropdownMenuItem>Last 30 days</DropdownMenuItem>
+                    <DropdownMenuItem disabled className="text-muted-foreground/50">Last 90 days (Soon)</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
              </div>
           </div>
 
-          {/* Leaderboard Table without prominent border */}
-          <div className="bg-card/30 backdrop-blur-sm rounded-2xl overflow-hidden shadow-sm">
+          {/* Leaderboard Table */}
+          <div className="bg-card/30 backdrop-blur-sm rounded-2xl overflow-hidden shadow-sm border border-border/40">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="border-b border-border/5 bg-muted/20">
-                  <tr className="text-xs text-muted-foreground uppercase tracking-wider">
-                    <th className="text-left py-4 px-4 font-medium w-14">#</th>
-                    <th className="text-left py-4 px-4 font-medium w-[280px] lg:w-[350px]">Repository</th>
-                    <th className="text-left py-4 px-4 font-medium w-[180px] hidden md:table-cell">Developer</th>
-                    <th className="w-auto"></th>
-                    <th className="text-right py-4 px-4 font-medium w-28">Stars</th>
-                    <th className="text-right py-4 px-6 font-medium w-28 hidden sm:table-cell">Forks</th>
-                  </tr>
-                </thead>
-                <tbody className="text-xs divide-y divide-border/5">
-                  {loading ? (
-                    <tr>
-                      <td colSpan={6} className="py-16 text-center text-muted-foreground">
-                        <div className="flex flex-col items-center gap-3">
-                          <div className="h-5 w-5 rounded-full border-2 border-primary border-t-transparent animate-spin opacity-50" />
-                          <span>Loading repositories...</span>
-                        </div>
-                      </td>
+                  <thead className="border-b border-border/10 bg-muted/20">
+                    <tr className="text-xs text-muted-foreground uppercase tracking-wider">
+                      <th className="text-center py-4 px-4 font-medium w-16 text-xs text-muted-foreground/60">#</th>
+                      <th className="text-left py-4 px-4 font-medium w-auto min-w-[300px]">Repository</th>
+                      <th className="text-left py-4 px-4 font-medium w-[200px] hidden md:table-cell">Developer</th>
+                      <th className="text-right py-4 px-4 font-medium w-[140px] whitespace-nowrap">Contributors <span className="text-xs text-muted-foreground font-normal sm:hidden lg:inline">(30d)</span></th>
+                      <th className="text-right py-4 px-4 font-medium w-[120px] whitespace-nowrap">Commits <span className="text-xs text-muted-foreground font-normal sm:hidden lg:inline">(30d)</span></th>
+                      <th className="text-right py-4 px-4 font-medium w-[100px] hidden sm:table-cell">Score</th>
+                      <th className="text-right py-4 px-4 font-medium w-[100px] text-muted-foreground/60">Stars</th>
                     </tr>
-                  ) : repos.length > 0 ? (
-                    repos.map((repo: any, idx: number) => {
-                      const developer = repo.user_repositories?.[0]?.users
-                      return (
-                        <tr 
-                          key={repo.id} 
-                          className="hover:bg-muted/40 transition-colors"
-                        >
-                          <td className="py-5 px-4 font-medium text-muted-foreground">
-                            {(idx + 1).toString().padStart(2, '0')}
-                          </td>
-                          <td className="py-5 px-4">
-                            <Link 
-                              href={`/repo/${repo.owner}/${repo.name}`}
-                              className="flex items-center gap-4 group max-w-md"
-                            >
-                              {repo.image_url ? (
-                                <div className="w-10 h-10 rounded-xl bg-muted relative overflow-hidden flex-shrink-0 border-none  transition-all shadow-sm">
-                                  <Image src={repo.image_url} alt={repo.name} fill className="object-cover" />
-                                </div>
-                              ) : (
-                                <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center text-sm font-bold flex-shrink-0 border-none group-hover:ring-2 group-hover:ring-primary/20 transition-all shadow-sm">
-                                  {repo.name[0].toUpperCase()}
-                                </div>
-                              )}
-                              <div className="min-w-0 flex-1">
-                                <div className="font-semibold text-sm mb-1 group-hover:text-primary transition-colors truncate">
-                                  {repo.name}
-                                </div>
-                                <div className="text-xs text-muted-foreground line-clamp-1 opacity-70 group-hover:opacity-100 transition-opacity max-w-[200px] sm:max-w-xs">
-                                  {repo.description || 'No description provided'}
-                                </div>
-                              </div>
-                            </Link>
-                          </td>
-                          <td className="py-5 px-4 hidden md:table-cell">
-                            {developer ? (
+                  </thead>
+                  <tbody className="text-sm divide-y divide-border/5">
+                    {loading ? (
+                      <tr>
+                        <td colSpan={7} className="py-16 text-center text-muted-foreground">
+                          <div className="flex flex-col items-center gap-3">
+                            <div className="h-5 w-5 rounded-full border-2 border-primary border-t-transparent animate-spin opacity-50" />
+                            <span>Loading activity data...</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : repos.length > 0 ? (
+                      repos.map((repo: any, idx: number) => {
+                        return (
+                          <tr 
+                            key={repo.id} 
+                            className="hover:bg-muted/40 transition-colors group"
+                          >
+                            <td className="py-4 px-4 font-medium text-muted-foreground text-center text-xs">
+                              {(idx + 1)}
+                            </td>
+                            <td className="py-4 px-4">
                               <Link 
-                                href={`/dev/${developer.github_username}`} 
-                                className="flex items-center gap-2.5 hover:opacity-80 transition-opacity max-w-[150px] group"
+                                href={`/repo/${repo.owner}/${repo.name}`}
+                                className="flex items-center gap-4 group"
                               >
-                                <div className="w-9 h-9 rounded-full bg-muted relative overflow-hidden flex-shrink-0  group-hover:ring-primary/30 transition-all">
-                                  {developer.avatar_url && (
-                                    <Image src={developer.avatar_url} alt={developer.github_username} fill className="object-cover" />
-                                  )}
+                                {repo.image_url ? (
+                                  <div className="w-10 h-10 rounded-xl bg-muted relative overflow-hidden flex-shrink-0 border border-border/10 transition-all shadow-sm">
+                                    <Image src={repo.image_url} alt={repo.name} fill className="object-cover" />
+                                  </div>
+                                ) : (
+                                  <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center text-sm font-bold flex-shrink-0 border-none group-hover:ring-2 group-hover:ring-primary/20 transition-all shadow-sm">
+                                    {repo.name[0].toUpperCase()}
+                                  </div>
+                                )}
+                                <div className="min-w-0 flex-1">
+                                  <div className="font-semibold text-sm mb-0.5 group-hover:text-primary transition-colors truncate">
+                                    {repo.name}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground line-clamp-1 opacity-70 group-hover:opacity-100 transition-opacity max-w-[240px]">
+                                    {repo.description || 'No description provided'}
+                                  </div>
                                 </div>
-                                <span className="truncate font-medium">{developer.github_username}</span>
                               </Link>
-                            ) : (
-                              <span className="text-muted-foreground opacity-50">—</span>
-                            )}
-                          </td>
-                          <td className="w-auto"></td>
-                          <td className="py-5 px-4 text-right font-medium font-mono text-muted-foreground/80">
-                            {repo.stars.toLocaleString()}
-                          </td>
-                          <td className="py-5 px-6 text-right hidden sm:table-cell">
-                            <span className="text-emerald-500/90 inline-flex items-center gap-1.5 bg-emerald-500/10 px-2 py-1 rounded-md text-[10px] font-medium border border-emerald-500/10">
-                              <TrendingUp className="h-3 w-3" />
-                              {repo.forks.toLocaleString()}
-                            </span>
-                          </td>
-                        </tr>
-                      )
-                    })
+                            </td>
+                            <td className="py-4 px-4 hidden md:table-cell">
+                               <div className="flex items-center gap-2">
+                                  <Link href={`/dev/${repo.owner}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                                    <div className="relative w-6 h-6 rounded-full overflow-hidden bg-muted border border-border/20">
+                                       <Image 
+                                         src={repo.user_repositories?.[0]?.users?.avatar_url || `https://github.com/${repo.owner}.png`} 
+                                         alt={repo.owner}
+                                         fill
+                                         className="object-cover"
+                                       />
+                                    </div>
+                                    <span className="text-xs font-medium text-muted-foreground truncate max-w-[100px] hover:text-foreground transition-colors">{repo.owner}</span>
+                                  </Link>
+                               </div>
+                            </td>
+                            <td className="py-4 px-4 text-right">
+                               <div className="inline-flex items-center justify-end font-semibold">
+                                  {repo.recent_contributors_count || 0}
+                               </div>
+                            </td>
+                            <td className="py-4 px-4 text-right">
+                               <span className="font-semibold text-foreground/90">{repo.recent_commits_count || 0}</span>
+                            </td>
+                             <td className="py-4 px-4 text-right hidden sm:table-cell">
+                               <div className="flex items-center justify-end gap-1 text-emerald-500 font-bold">
+                                 <TrendingUp className="h-3 w-3" />
+                                 {Math.round(repo.activity_score || 0)}
+                               </div>
+                            </td>
+                            <td className="py-4 px-4 text-right text-muted-foreground/50 text-xs font-mono">
+                              {repo.stars.toLocaleString()}
+                            </td>
+                          </tr>
+                        )
+                      })
                   ) : (
                     <tr>
                       <td colSpan={6} className="py-16 text-center text-muted-foreground">

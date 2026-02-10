@@ -5,11 +5,7 @@ import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianG
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 interface RepoChartProps {
-  data: {
-    recorded_at: string;
-    stars: number;
-    forks: number;
-  }[];
+  data: any[];
   title: string;
   dataKey: string;
   color: string;
@@ -22,7 +18,7 @@ export function RepoChart({ data, title, dataKey, color }: RepoChartProps) {
     stars: d.stars,
     forks: d.forks,
     // Use dynamic key access if needed, or map explicitly
-    val: (d as any)[dataKey]
+    val: typeof (d as any)[dataKey] === 'number' ? (d as any)[dataKey] : 0
   }))
 
   return (
@@ -30,7 +26,7 @@ export function RepoChart({ data, title, dataKey, color }: RepoChartProps) {
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{title}</CardTitle>
         <div className="text-2xl font-bold">
-           {formattedData.length > 0 ? formattedData[formattedData.length - 1].val.toLocaleString() : 0}
+           {formattedData.length > 0 ? (formattedData[formattedData.length - 1].val ?? 0).toLocaleString() : 0}
         </div>
       </CardHeader>
       <CardContent className="pl-0 pb-2">

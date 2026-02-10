@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Search, Plus, Loader2, Github, AlertCircle, Upload, Check } from 'lucide-react'
 import { listMyRepos, addRepository } from '@/actions/github'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 
 interface Repo {
@@ -26,6 +26,7 @@ interface Repo {
     maintain: boolean
     push: boolean
   }
+  is_added?: boolean
 }
 
 export function AddRepoModal({ onRepoAdded, children }: { onRepoAdded?: () => void, children?: React.ReactNode }) {
@@ -47,6 +48,17 @@ export function AddRepoModal({ onRepoAdded, children }: { onRepoAdded?: () => vo
   const [previewUrl, setPreviewUrl] = useState('')
 
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    // Open if triggered from redirect
+    const addRepo = searchParams.get('add_repo')
+    if (addRepo) {
+      setOpen(true)
+      // Clean up URL
+      router.replace('/')
+    }
+  }, [searchParams])
 
   useEffect(() => {
     if (open) {
@@ -187,7 +199,36 @@ export function AddRepoModal({ onRepoAdded, children }: { onRepoAdded?: () => vo
             </div>
           )}
 
-          {!selectedRepo ? (
+
+          {!user ? (
+            <div className="text-center py-12 space-y-6">
+               <div className="space-y-2">
+                 <h3 className="text-lg font-semibold">Sign in to participate</h3>
+                 <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                   Login with GitHub to add your repository to the leaderboard.
+                 </p>
+               </div>
+               <div className="flex flex-col gap-3 max-w-xs mx-auto">
+                  <Button 
+                     variant="outline"
+                     className="w-full gap-2"
+                     onClick={async () => {
+                       const supabase = createClient()
+                       await supabase.auth.signInWithOAuth({
+                         provider: 'github',
+                         options: {
+                           redirectTo: `${location.origin}/auth/callback?next=/?add_repo=true`,
+                           scopes: 'repo read:user user:email'
+                         }
+                       })
+                     }}
+                   >
+                     <Github className="h-4 w-4" />
+                     Sign in with GitHub
+                   </Button>
+               </div>
+            </div>
+          ) : !selectedRepo ? (
             // Step 1: Select Repo
             <div className="space-y-4">
               <div className="relative">
@@ -226,8 +267,11 @@ export function AddRepoModal({ onRepoAdded, children }: { onRepoAdded?: () => vo
                   {filteredRepos.map(repo => (
                     <button
                       key={repo.id}
-                      onClick={() => handleSelectRepo(repo)}
-                      className="w-full flex items-center gap-3 p-3 rounded-xl border border-border/50 hover:bg-muted/50 transition-colors text-left group"
+                      onClick={() => !repo.is_added && handleSelectRepo(repo)}
+                      disabled={repo.is_added}
+                      className={`w-full flex items-center gap-3 p-3 rounded-xl border border-border/50 transition-colors text-left group ${
+                        repo.is_added ? 'opacity-60 cursor-default bg-muted/30' : 'hover:bg-muted/50'
+                      }`}
                     >
                       <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center shrink-0 overflow-hidden border border-border/20">
                          {repo.owner.avatar_url ? (
@@ -237,11 +281,22 @@ export function AddRepoModal({ onRepoAdded, children }: { onRepoAdded?: () => vo
                          )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium truncate group-hover:text-primary transition-colors">{repo.name}</div>
+                        <div className="font-medium truncate group-hover:text-primary transition-colors flex items-center gap-2">
+                          {repo.name}
+                          {repo.is_added && (
+                            <span className="text-[10px] bg-green-500/10 text-green-600 px-1.5 py-0.5 rounded-full font-medium border border-green-500/20">
+                              Added
+                            </span>
+                          )}
+                        </div>
                         <div className="text-xs text-muted-foreground truncate opacity-70">{repo.full_name}</div>
                       </div>
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                         <Plus className="h-5 w-5 text-muted-foreground" />
+                      <div className={`transition-opacity ${repo.is_added ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                         {repo.is_added ? (
+                           <Check className="h-5 w-5 text-green-500" />
+                         ) : (
+                           <Plus className="h-5 w-5 text-muted-foreground" />
+                         )}
                       </div>
                     </button>
                   ))}

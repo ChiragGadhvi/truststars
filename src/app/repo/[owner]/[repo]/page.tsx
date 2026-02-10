@@ -44,14 +44,18 @@ export default async function RepoPage({ params }: { params: Promise<{ owner: st
   let chartData = history?.map((h: any) => ({
     recorded_at: h.recorded_at,
     stars: h.stars,
-    forks: h.forks
+    forks: h.forks,
+    contributors: h.contributors,
+    activity_score: h.activity_score
   })) || []
 
   if (chartData.length === 0) {
     chartData.push({
       recorded_at: new Date().toISOString(),
       stars: repository.stars,
-      forks: repository.forks
+      forks: repository.forks,
+      contributors: repository.contributors,
+      activity_score: repository.activity_score
     })
   }
 
