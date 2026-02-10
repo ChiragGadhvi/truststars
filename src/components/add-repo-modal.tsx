@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -29,7 +29,19 @@ interface Repo {
   is_added?: boolean
 }
 
-export function AddRepoModal({ onRepoAdded, children }: { onRepoAdded?: () => void, children?: React.ReactNode }) {
+export function AddRepoModal(props: { onRepoAdded?: () => void, children?: React.ReactNode }) {
+  return (
+    <Suspense fallback={props.children ?? (
+      <Button className="font-semibold shadow-md bg-white text-black hover:bg-gray-200 transition-all duration-300">
+        <Plus className="mr-2 h-4 w-4" /> Add Repository
+      </Button>
+    )}>
+      <AddRepoModalContent {...props} />
+    </Suspense>
+  )
+}
+
+function AddRepoModalContent({ onRepoAdded, children }: { onRepoAdded?: () => void, children?: React.ReactNode }) {
   const [open, setOpen] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
