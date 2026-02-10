@@ -21,12 +21,28 @@ export default function Home() {
   const [repos, setRepos] = useState<any[]>([])
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const hasLoadedRef = useRef(false)
   
   // Search state
   const [searchTerm, setSearchTerm] = useState('')
   const [searchRepos, setSearchRepos] = useState<any[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [showResults, setShowResults] = useState(false)
+  
+  const handleSearch = useCallback(async (query: string) => {
+    setIsSearching(true)
+    setShowResults(true)
+    const supabase = createClient()
+    
+    const { data } = await supabase
+      .from('repositories')
+      .select('name, full_name, owner, description, image_url, stars')
+      .ilike('name', `%${query}%`)
+      .limit(5)
+    
+    setSearchRepos(data || [])
+    setIsSearching(false)
+  }, [])
   
   // Debounce search
   useEffect(() => {
@@ -39,13 +55,9 @@ export default function Home() {
       }
     }, 400)
     return () => clearTimeout(timer)
-  }, [searchTerm])
+  }, [searchTerm, handleSearch])
 
-  useEffect(() => {
-    fetchLeaderboard()
-  }, [])
-
-  const fetchLeaderboard = async () => {
+  const fetchLeaderboard = useCallback(async () => {
     setLoading(true)
     const supabase = createClient()
     
@@ -67,22 +79,17 @@ export default function Home() {
 
     setRepos(data || [])
     setLoading(false)
-  }
+  }, [])
 
-  const handleSearch = async (query: string) => {
-    setIsSearching(true)
-    setShowResults(true)
-    const supabase = createClient()
-    
-    const { data } = await supabase
-      .from('repositories')
-      .select('name, full_name, owner, description, image_url, stars')
-      .ilike('name', `%${query}%`)
-      .limit(5)
-    
-    setSearchRepos(data || [])
-    setIsSearching(false)
-  }
+  useEffect(() => {
+    // Only fetch once on mount
+    if (!hasLoadedRef.current) {
+      hasLoadedRef.current = true
+      fetchLeaderboard()
+    }
+  }, [fetchLeaderboard])
+
+
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -234,6 +241,7 @@ export default function Home() {
                               <Link 
                                 href={`/repo/${repo.owner}/${repo.name}`}
                                 className="flex items-center gap-4 group"
+                                prefetch={true}
                               >
                                 {repo.image_url ? (
                                   <div className="w-10 h-10 rounded-xl bg-muted relative overflow-hidden flex-shrink-0 border border-border/10 transition-all shadow-sm">
@@ -256,7 +264,7 @@ export default function Home() {
                             </td>
                             <td className="py-4 px-4 hidden md:table-cell">
                                <div className="flex items-center gap-2">
-                                  <Link href={`/dev/${repo.owner}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                                  <Link href={`/dev/${repo.owner}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity" prefetch={true}>
                                     <div className="relative w-6 h-6 rounded-full overflow-hidden bg-muted border border-border/20">
                                        <Image 
                                          src={repo.user_repositories?.[0]?.users?.avatar_url || `https://github.com/${repo.owner}.png`} 

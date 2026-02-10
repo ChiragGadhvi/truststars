@@ -9,7 +9,7 @@ export default async function RepoPage({ params }: { params: Promise<{ owner: st
   const fullName = `${owner}/${repo}`
   const supabase = await createClient()
 
-  // 1. Fetch Repo
+  // Optimize: Fetch repository first to get the ID
   const { data: repository, error } = await supabase
     .from('repositories')
     .select(`
@@ -26,19 +26,21 @@ export default async function RepoPage({ params }: { params: Promise<{ owner: st
     notFound()
   }
 
-  // 2. Maintainers
-  // Map user_repositories to maintainers list
+  // Fetch history in parallel with maintainer processing
+  const historyPromise = supabase
+    .from('repo_stats_history')
+    .select('*')
+    .eq('repo_id', repository.id)
+    .order('recorded_at', { ascending: true })
+
+  // Process maintainers while history is being fetched
   const maintainers = repository.user_repositories?.map((ur: any) => ({
     ...ur.users,
     role: ur.role
   })).filter((u: any) => u.id) || []
 
-  // 3. History
-  const { data: history } = await supabase
-    .from('repo_stats_history')
-    .select('*')
-    .eq('repo_id', repository.id)
-    .order('recorded_at', { ascending: true })
+  // Await history result
+  const { data: history } = await historyPromise
 
   // Transform for charts
   let chartData = history?.map((h: any) => ({

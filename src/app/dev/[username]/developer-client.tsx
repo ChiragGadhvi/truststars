@@ -29,7 +29,7 @@ export default function DeveloperClient({ username, user, repos, totalStars, tot
   if (!user) return null
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background animate-in fade-in duration-300">
       <div className="container mx-auto px-4 py-6 md:py-8 max-w-5xl">
         {/* Breadcrumb Navigation */}
         <motion.nav 
@@ -167,6 +167,7 @@ export default function DeveloperClient({ username, user, repos, totalStars, tot
                   <Link 
                     href={`/repo/${repo.full_name.split('/')[0]}/${repo.full_name.split('/')[1]}`}
                     className="block bg-card/50 backdrop-blur-sm border border-border rounded-lg p-6 hover:bg-accent/50 hover:scale-[1.02] transition-all"
+                    prefetch={true}
                   >
                     <div className="flex items-start gap-3">
                       {repo.image_url ? (

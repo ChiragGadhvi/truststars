@@ -21,7 +21,7 @@ export default function RepoClient({ owner, repoName, repository, maintainers, c
   const fullName = `${owner}/${repoName}`
 
   return (
-    <div className="container py-8 max-w-6xl mx-auto px-4">
+    <div className="container py-8 max-w-6xl mx-auto px-4 animate-in fade-in duration-300">
       {/* Breadcrumb Navigation */}
       <motion.nav 
         initial={{ opacity: 0, y: -10 }}
@@ -231,7 +231,7 @@ export default function RepoClient({ owner, repoName, repository, maintainers, c
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.6 + idx * 0.05 }}
               >
-                <Link href={`/dev/${user.github_username}`} className="group block">
+                <Link href={`/dev/${user.github_username}`} className="group block" prefetch={true}>
                   <div className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 hover:border-primary/20 hover:scale-105 transition-all shadow-sm">
                     <Avatar className="h-10 w-10 border-2 border-background shadow-sm">
                       <AvatarImage src={user.avatar_url} />

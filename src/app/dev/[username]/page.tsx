@@ -8,10 +8,24 @@ export default async function DeveloperPage({ params }: { params: Promise<{ user
   const { username } = await params
   const supabase = await createClient()
 
-  // Fetch user data
+  // Optimize data fetching: Get user and their repos in a single query
   const { data: userData } = await supabase
     .from('users')
-    .select('*')
+    .select(`
+      *,
+      user_repositories (
+        repositories (
+          id,
+          full_name,
+          name,
+          description,
+          image_url,
+          stars,
+          forks,
+          language
+        )
+      )
+    `)
     .eq('github_username', username)
     .single()
 
@@ -19,24 +33,10 @@ export default async function DeveloperPage({ params }: { params: Promise<{ user
     notFound()
   }
 
-  // Fetch user's repositories
-  const { data: userRepos } = await supabase
-    .from('user_repositories')
-    .select(`
-      repositories (
-        id,
-        full_name,
-        name,
-        description,
-        image_url,
-        stars,
-        forks,
-        language
-      )
-    `)
-    .eq('user_id', userData.id)
-
-  const reposList = userRepos?.map((ur: any) => ur.repositories).filter(Boolean) || []
+  // Transform data
+  const reposList = userData.user_repositories
+    ?.map((ur: any) => ur.repositories)
+    .filter(Boolean) || []
 
   // Calculate aggregated stats
   const totalStars = reposList.reduce((sum: number, repo: any) => sum + (repo.stars || 0), 0)
