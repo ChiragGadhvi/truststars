@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from "@/components/ui/button"
-import { Search, TrendingUp, Loader2, ArrowRight } from "lucide-react"
+import { Search, TrendingUp, Loader2, ArrowRight, BadgeCheck } from "lucide-react"
 import Link from "next/link"
 import Image from 'next/image'
 import Footer from '@/components/footer'
@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/client'
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { AddRepoModal } from '@/components/add-repo-modal'
+import { AutoSyncTrigger } from '@/components/auto-sync-trigger'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,17 +66,18 @@ export default function Home() {
     const { data: { user } } = await supabase.auth.getUser()
     setUser(user)
 
-    // Fetch top repos sorted by Activity Score
+    // Fetch top repos sorted by Activity Score then Newest
     const { data } = await supabase
       .from('repositories')
       .select(`
         *,
-        user_repositories!inner(
+        user_repositories(
           users(github_username, avatar_url)
         )
       `)
       .order('activity_score', { ascending: false })
-      .limit(20)
+      .order('created_at', { ascending: false })
+      .limit(50)
 
     setRepos(data || [])
     setLoading(false)
@@ -93,6 +95,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <AutoSyncTrigger />
       {/* Main Content */}
       <main className="flex-1">
         <div className="container mx-auto px-4 py-8 md:py-16 max-w-5xl">
@@ -253,8 +256,14 @@ export default function Home() {
                                   </div>
                                 )}
                                 <div className="min-w-0 flex-1">
-                                  <div className="font-semibold text-sm mb-0.5 group-hover:text-primary transition-colors truncate">
+                                  <div className="font-semibold text-sm mb-0.5 group-hover:text-primary transition-colors truncate flex items-center gap-1.5">
                                     {repo.name}
+                                    {repo.verified_at && (
+                                      <BadgeCheck className="h-4 w-4 text-blue-500 fill-blue-500/10" />
+                                    )}
+                                    {(new Date(repo.created_at).getTime() > new Date().getTime() - 72 * 60 * 60 * 1000) && (
+                                      <span className="bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[9px] px-1.5 py-0.5 rounded-md font-bold border border-amber-500/20">NEW</span>
+                                    )}
                                   </div>
                                   <div className="text-xs text-muted-foreground line-clamp-1 opacity-70 group-hover:opacity-100 transition-opacity max-w-[240px]">
                                     {repo.description || 'No description provided'}
@@ -267,13 +276,13 @@ export default function Home() {
                                   <Link href={`/dev/${repo.owner}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity" prefetch={true}>
                                     <div className="relative w-6 h-6 rounded-full overflow-hidden bg-muted border border-border/20">
                                        <Image 
-                                         src={repo.user_repositories?.[0]?.users?.avatar_url || `https://github.com/${repo.owner}.png`} 
+                                         src={repo.user_repositories?.[0]?.users?.avatar_url || repo.owner_avatar_url || `https://github.com/${repo.owner}.png`} 
                                          alt={repo.owner}
                                          fill
                                          className="object-cover"
                                        />
                                     </div>
-                                    <span className="text-xs font-medium text-muted-foreground truncate max-w-[100px] hover:text-foreground transition-colors">{repo.owner}</span>
+                                    <span className="text-xs font-medium text-muted-foreground truncate max-w-[120px] hover:text-foreground transition-colors">{repo.owner_display_name || repo.owner}</span>
                                   </Link>
                                </div>
                             </td>
@@ -309,6 +318,11 @@ export default function Home() {
                   )}
                 </tbody>
               </table>
+            </div>
+            <div className="py-3 px-6 border-t border-border/10 bg-muted/5 flex items-center justify-center">
+               <p className="text-[10px] text-muted-foreground/50 tracking-wide uppercase font-medium">
+                 Repository details refresh automatically every 15 minutes
+               </p>
             </div>
           </div>
 

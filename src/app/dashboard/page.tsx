@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Plus, Star, GitFork, Package } from 'lucide-react'
+import { SyncButton } from '@/components/sync-button'
 
 export default async function Dashboard() {
   const supabase = await createClient()
@@ -28,11 +29,14 @@ export default async function Dashboard() {
             Manage your verified repositories
           </p>
         </div>
-        <Link href="/dashboard/add">
-          <Button size="sm" className="text-xs">
-            <Plus className="mr-2 h-3.5 w-3.5" /> Add Repository
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <SyncButton />
+          <Link href="/dashboard/add">
+            <Button size="sm" className="text-xs h-8">
+              <Plus className="mr-2 h-3.5 w-3.5" /> Add Repository
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="grid gap-3">

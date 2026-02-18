@@ -8,8 +8,8 @@ export default async function DeveloperPage({ params }: { params: Promise<{ user
   const { username } = await params
   const supabase = await createClient()
 
-  // Optimize data fetching: Get user and their repos in a single query
-  const { data: userData } = await supabase
+  // 1. Try to find an actual registered user
+  const { data: userData, error: userError } = await supabase
     .from('users')
     .select(`
       *,
@@ -26,17 +26,43 @@ export default async function DeveloperPage({ params }: { params: Promise<{ user
         )
       )
     `)
-    .eq('github_username', username)
-    .single()
+    .ilike('github_username', username)
+    .maybeSingle()
 
-  if (!userData) {
-    notFound()
+  if (userError) {
+     console.error("Error fetching user data:", userError);
   }
 
-  // Transform data
-  const reposList = userData.user_repositories
-    ?.map((ur: any) => ur.repositories)
-    .filter(Boolean) || []
+  let finalUser = userData
+  let reposList = []
+
+  if (userData) {
+    // Transform data for registered user
+    reposList = (userData.user_repositories
+      ?.map((ur: any) => ur.repositories)
+      .filter(Boolean) || []) as any[]
+  } else {
+    // 2. Fallback: Check repositories table for this owner to build a "Virtual Profile"
+    const { data: ownerRepos, error: ownerReposError } = await supabase
+      .from('repositories')
+      .select('*')
+      .ilike('owner', username)
+      .order('stars', { ascending: false })
+
+    if (!ownerRepos || ownerRepos.length === 0) {
+      notFound()
+    }
+
+    // Build virtual user profile from repository data
+    const firstRepo = ownerRepos[0]
+    finalUser = {
+      github_username: username,
+      avatar_url: firstRepo.owner_avatar_url || `https://github.com/${username}.png`,
+      display_name: firstRepo.owner_display_name || username,
+      bio: null // Virtual profiles don't have bios yet
+    }
+    reposList = ownerRepos
+  }
 
   // Calculate aggregated stats
   const totalStars = reposList.reduce((sum: number, repo: any) => sum + (repo.stars || 0), 0)
@@ -45,7 +71,7 @@ export default async function DeveloperPage({ params }: { params: Promise<{ user
   return (
     <DeveloperClient 
       username={username}
-      user={userData}
+      user={finalUser}
       repos={reposList}
       totalStars={totalStars}
       totalForks={totalForks}

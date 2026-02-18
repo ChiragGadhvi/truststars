@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { RepoChart } from '@/components/repo-chart'
-import { Star, GitFork, Users, ShieldCheck, ArrowUpRight, Scale, ChevronRight, Activity, GitCommit, GitPullRequest, Calendar } from 'lucide-react'
+import { Star, GitFork, Users, ShieldCheck, ArrowUpRight, Scale, ChevronRight, Activity, GitCommit, GitPullRequest, Calendar, AlertCircle, Github } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { motion } from 'framer-motion'
@@ -60,18 +60,36 @@ export default function RepoClient({ owner, repoName, repository, maintainers, c
               <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
                 {repository.name}
               </h1>
-              <div className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1 border border-emerald-500/20" title="Verified">
-                <ShieldCheck className="h-3 w-3" /> Verified
-              </div>
+              {repository.verified_at && (
+                <div className="bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1 border border-blue-500/20" title="Verified">
+                  <ShieldCheck className="h-3 w-3" /> Verified
+                </div>
+              )}
             </div>
-            <p className="text-base text-muted-foreground leading-relaxed line-clamp-2 max-w-xl">{repository.description}</p>
+            <p className="text-base text-muted-foreground leading-relaxed line-clamp-2 max-w-xl mb-3">{repository.description}</p>
             
-            <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
+            {repository.topics && repository.topics.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-4">
+                {repository.topics.slice(0, 6).map((topic: string) => (
+                  <span key={topic} className="px-2 py-0.5 bg-secondary text-secondary-foreground rounded-md text-[10px] font-medium border border-border/50">
+                    {topic}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
               {repository.language && (
                 <div className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full bg-primary" />
                   {repository.language}
                 </div>
+              )}
+              {repository.homepage && (
+                <a href={repository.homepage} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-primary hover:underline">
+                  <ArrowUpRight className="h-3.5 w-3.5" />
+                  {new URL(repository.homepage).hostname}
+                </a>
               )}
                <div className="flex items-center gap-1 group cursor-help" title="Based on recent GitHub activity">
                   <Activity className="h-3.5 w-3.5 text-primary" />
@@ -83,7 +101,7 @@ export default function RepoClient({ owner, repoName, repository, maintainers, c
         <div className="flex gap-3 shrink-0 self-start md:self-center">
           <Button variant="outline" size="sm" asChild className="gap-2">
             <a href={`https://github.com/${fullName}`} target="_blank" rel="noopener noreferrer">
-              <ArrowUpRight className="h-4 w-4" />
+              <Github className="h-4 w-4" />
               View on GitHub
             </a>
           </Button>
@@ -98,11 +116,11 @@ export default function RepoClient({ owner, repoName, repository, maintainers, c
            <span className="text-xs font-normal text-muted-foreground ml-2 px-2 py-0.5 bg-muted rounded-full">Last 30 Days</span>
         </h2>
         
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-6">
           {[
             { 
                icon: Users, 
-               label: 'Active Users', 
+               label: 'Active Base', 
                value: repository.recent_contributors_count || 0,
                sub: 'Contributors',
                color: 'text-blue-500', 
@@ -123,6 +141,14 @@ export default function RepoClient({ owner, repoName, repository, maintainers, c
                sub: 'Features Shipped',
                color: 'text-purple-500',
                bg: 'bg-purple-500/10'
+            },
+            { 
+               icon: AlertCircle, 
+               label: 'Open Issues', 
+               value: repository.open_issues_count || 0, 
+               sub: 'Help Wanted',
+               color: 'text-red-500',
+               bg: 'bg-red-500/10'
             },
              { 
                icon: Calendar, 
@@ -175,12 +201,6 @@ export default function RepoClient({ owner, repoName, repository, maintainers, c
                 <h3 className="font-semibold text-sm">Contributor Growth</h3>
                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Contributors</span>
              </div>
-             {/* Note: chartData relies on historical 'contributors' count which was active_contributors in updated addRepo. 
-                 But wait, chartData only has stars/forks/activity_score in update page.tsx logic unless I added contributors.
-                 I didn't add 'contributors' to chartData map in page.tsx. I should fix that next if not present.
-                 Wait, previously fetch history selected `*`. And repo_stats_history has `contributors`.
-                 So just need to expose it in page.tsx map. I'll pass 'contributors' dataKey.
-             */}
              <RepoChart data={chartData} title="" dataKey="contributors" color="#3b82f6" />
           </div>
         </motion.div>
@@ -191,24 +211,33 @@ export default function RepoClient({ owner, repoName, repository, maintainers, c
            <div className="flex items-center gap-3 px-4">
               <Star className="h-4 w-4 text-muted-foreground" />
               <div>
-                 <div className="font-bold text-lg">{repository.stars.toLocaleString()}</div>
+                 <div className="font-bold text-lg">{repository.stars?.toLocaleString() || 0}</div>
                  <div className="text-xs text-muted-foreground">Stargazers</div>
               </div>
            </div>
            <div className="flex items-center gap-3 px-4 border-l border-border/40">
               <GitFork className="h-4 w-4 text-muted-foreground" />
               <div>
-                 <div className="font-bold text-lg">{repository.forks.toLocaleString()}</div>
+                 <div className="font-bold text-lg">{repository.forks?.toLocaleString() || 0}</div>
                  <div className="text-xs text-muted-foreground">Forks</div>
               </div>
            </div>
-            <div className="flex items-center gap-3 px-4 border-l border-border/40">
-              <Scale className="h-4 w-4 text-muted-foreground" />
+           <div className="flex items-center gap-3 px-4 border-l border-border/40">
+              <Users className="h-4 w-4 text-muted-foreground" />
               <div>
-                 <div className="font-bold text-sm truncate max-w-[100px]">{repository.license?.spdx_id || 'MIT'}</div>
-                 <div className="text-xs text-muted-foreground">License</div>
+                 <div className="font-bold text-lg">{repository.subscribers_count?.toLocaleString() || 0}</div>
+                 <div className="text-xs text-muted-foreground">Watchers</div>
               </div>
            </div>
+           {repository.license_name && (
+            <div className="flex items-center gap-3 px-4 border-l border-border/40">
+               <Scale className="h-4 w-4 text-muted-foreground" />
+               <div>
+                  <div className="font-bold text-sm truncate max-w-[120px]" title={repository.license_name}>{repository.license_name}</div>
+                  <div className="text-xs text-muted-foreground">License</div>
+               </div>
+            </div>
+           )}
       </div>
 
       {/* Maintainers */}
