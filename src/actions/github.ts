@@ -120,7 +120,17 @@ export async function checkRepo(repoFullName: string, providerToken?: string) {
   return { data: await res.json() }
 }
 
-export async function addRepository(repoFullName: string, providerToken?: string, customData?: { description?: string, imageUrl?: string }) {
+export async function addRepository(
+  repoFullName: string, 
+  providerToken?: string, 
+  customData?: { 
+    description?: string, 
+    imageUrl?: string,
+    twitterHandle?: string,
+    linkedinUrl?: string,
+    websiteUrl?: string
+  }
+) {
   const supabase = await createClient(true) // Use service role for admin tasks
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -136,6 +146,9 @@ export async function addRepository(repoFullName: string, providerToken?: string
          github_username: user.user_metadata?.user_name || user.email?.split('@')[0],
          avatar_url: user.user_metadata?.avatar_url, 
          display_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0],
+         twitter_handle: customData?.twitterHandle,
+         linkedin_url: customData?.linkedinUrl,
+         website_url: customData?.websiteUrl,
          updated_at: new Date().toISOString()
       }, { onConflict: 'id' })
   }
@@ -161,8 +174,10 @@ export async function addRepository(repoFullName: string, providerToken?: string
   try {
     const ownerRes = await githubFetch(`https://api.github.com/users/${githubRepo.owner.login}`, providerToken)
     if (ownerRes.ok) {
-      const ownerData = await ownerRes.json()
-      ownerDisplayName = ownerData.name || ownerData.login
+      const ownerData = await ownerRes.ok ? await ownerRes.json() : null
+      if (ownerData) {
+        ownerDisplayName = ownerData.name || ownerData.login
+      }
     }
   } catch (e) {
     console.error("Error fetching owner profile:", e)
@@ -256,7 +271,11 @@ export async function addRepository(repoFullName: string, providerToken?: string
       network_count: githubRepo.network_count,
       owner_avatar_url: githubRepo.owner.avatar_url,
       owner_id_github: githubRepo.owner.id,
-      owner_display_name: ownerDisplayName
+      owner_display_name: ownerDisplayName,
+      // Optional social fields for virtual profiles
+      twitter_handle: customData?.twitterHandle,
+      linkedin_url: customData?.linkedinUrl,
+      website_url: customData?.websiteUrl
     }, { onConflict: 'full_name' })
     .select()
     .single()

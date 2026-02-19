@@ -63,6 +63,11 @@ function AddRepoModalContent({ onRepoAdded, children }: { onRepoAdded?: () => vo
   const [customDescription, setCustomDescription] = useState('')
   const [customIconUrl, setCustomIconUrl] = useState('')
   const [previewUrl, setPreviewUrl] = useState('')
+  
+  // New social/website fields
+  const [twitterHandle, setTwitterHandle] = useState('')
+  const [linkedinUrl, setLinkedinUrl] = useState('')
+  const [websiteUrl, setWebsiteUrl] = useState('')
 
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -85,9 +90,11 @@ function AddRepoModalContent({ onRepoAdded, children }: { onRepoAdded?: () => vo
       setCustomDescription('')
       setCustomIconUrl('')
       setPreviewUrl('')
-      setSearchTerm('')
       setUseUrl(false)
       setRepoUrl('')
+      setTwitterHandle('')
+      setLinkedinUrl('')
+      setWebsiteUrl('')
     }
   }, [open])
 
@@ -214,7 +221,10 @@ function AddRepoModalContent({ onRepoAdded, children }: { onRepoAdded?: () => vo
         session?.provider_token || undefined,
         {
           description: customDescription,
-          imageUrl: customIconUrl || selectedRepo.owner?.avatar_url // Use custom or fallback
+          imageUrl: customIconUrl || selectedRepo.owner?.avatar_url, // Use custom or fallback
+          twitterHandle,
+          linkedinUrl,
+          websiteUrl
         }
       )
       
@@ -458,6 +468,42 @@ function AddRepoModalContent({ onRepoAdded, children }: { onRepoAdded?: () => vo
                      {customDescription.length}/200
                    </div>
                  </div>
+
+                  <div className="pt-2">
+                    <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                      Social Links <span className="text-[10px] font-normal text-muted-foreground bg-muted px-1.5 py-0.5 rounded">Optional</span>
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="grid gap-1.5">
+                        <label className="text-xs font-medium text-muted-foreground">X (Twitter) Handle</label>
+                        <Input 
+                          placeholder="@username" 
+                          value={twitterHandle}
+                          onChange={(e) => setTwitterHandle(e.target.value)}
+                          className="bg-background/50 border-border h-9"
+                        />
+                      </div>
+                      <div className="grid gap-1.5">
+                        <label className="text-xs font-medium text-muted-foreground">LinkedIn URL</label>
+                        <Input 
+                          placeholder="linkedin.com/in/..." 
+                          value={linkedinUrl}
+                          onChange={(e) => setLinkedinUrl(e.target.value)}
+                          className="bg-background/50 border-border h-9"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid gap-1.5 mt-4">
+                      <label className="text-xs font-medium text-muted-foreground">Website URL</label>
+                      <Input 
+                        placeholder="https://yourwebsite.com" 
+                        value={websiteUrl}
+                        onChange={(e) => setWebsiteUrl(e.target.value)}
+                        className="bg-background/50 border-border h-9"
+                      />
+                    </div>
+                  </div>
               </div>
             </div>
           )}

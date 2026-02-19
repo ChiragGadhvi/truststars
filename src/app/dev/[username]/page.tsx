@@ -59,7 +59,10 @@ export default async function DeveloperPage({ params }: { params: Promise<{ user
       github_username: username,
       avatar_url: firstRepo.owner_avatar_url || `https://github.com/${username}.png`,
       display_name: firstRepo.owner_display_name || username,
-      bio: null // Virtual profiles don't have bios yet
+      bio: null, // Virtual profiles don't have bios yet
+      twitter_handle: firstRepo.twitter_handle,
+      linkedin_url: firstRepo.linkedin_url,
+      website_url: firstRepo.website_url
     }
     reposList = ownerRepos
   }
