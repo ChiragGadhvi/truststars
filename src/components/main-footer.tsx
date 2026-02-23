@@ -11,7 +11,7 @@ export function MainFooter() {
   }
 
   return (
-    <div className="container mx-auto px-4 pb-8 mt-auto max-w-5xl">
+    <div className="w-full xl:w-[calc(100%-600px)] xl:mx-auto px-4 pb-8 mt-auto max-w-5xl">
       <Footer />
     </div>
   )

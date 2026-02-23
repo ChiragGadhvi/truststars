@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
 import DashboardButton from "@/components/dashboard-button";
 import { MainFooter } from "@/components/main-footer";
+import { GlobalSidebars } from "@/components/global-sidebars";
 
 const inconsolata = Inconsolata({ subsets: ["latin"] });
 
@@ -33,8 +34,11 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <GlobalSidebars />
           <DashboardButton />
-          {children}
+          <div className="flex-1 w-full xl:w-[calc(100%-600px)] xl:mx-auto max-w-5xl">
+            {children}
+          </div>
           <MainFooter />
         </ThemeProvider>
       </body>

@@ -20,6 +20,8 @@ import {
 
 export default function Home() {
   const [repos, setRepos] = useState<any[]>([])
+  const [recentRepos, setRecentRepos] = useState<any[]>([])
+  const [visibleCount, setVisibleCount] = useState(10)
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const hasLoadedRef = useRef(false)
@@ -79,7 +81,19 @@ export default function Home() {
       .order('created_at', { ascending: false })
       .limit(50)
 
+    const { data: recentData } = await supabase
+      .from('repositories')
+      .select(`
+        *,
+        user_repositories(
+          users(github_username, avatar_url)
+        )
+      `)
+      .order('created_at', { ascending: false })
+      .limit(16)
+
     setRepos(data || [])
+    setRecentRepos(recentData || [])
     setLoading(false)
   }, [])
 
@@ -97,8 +111,8 @@ export default function Home() {
     <div className="min-h-screen bg-background flex flex-col">
       <AutoSyncTrigger />
       {/* Main Content */}
-      <main className="flex-1">
-        <div className="container mx-auto px-4 py-8 md:py-16 max-w-5xl">
+      <main className="flex-1 flex justify-center w-full px-4 py-8 md:py-16">
+        <div className="w-full">
           {/* Hero Section */}
           <div className="text-center mb-16 animate-in fade-in slide-in-from-bottom-4 duration-500 relative z-20">
             <div className="inline-flex items-center gap-3 mb-6">
@@ -186,6 +200,21 @@ export default function Home() {
             )}
           </div>
 
+          {/* Recently Added Section */}
+          {recentRepos.length > 0 && (
+            <div className="mb-12 relative z-10 w-full animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
+              <div className="flex items-center mb-4 px-1">
+                <h2 className="text-lg font-semibold tracking-tight">Recently Added Projects</h2>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {recentRepos.slice(0, 4).map((project) => (
+                  <ProjectCard key={project.id} project={project} />
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center justify-between mb-6 px-1 relative z-10">
              <h2 className="text-lg font-semibold tracking-tight">Top Active Projects</h2>
              
@@ -207,14 +236,13 @@ export default function Home() {
 
           {/* Leaderboard Table */}
           <div className="bg-card/30 backdrop-blur-sm rounded-2xl overflow-hidden shadow-sm border border-border/40">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                  <thead className="border-b border-border/10 bg-muted/20">
+            <div className="overflow-x-auto relative">
+              <table className="w-full relative">
+                  <thead className="border-b border-border/10 bg-card sticky top-0 z-20 shadow-sm">
                     <tr className="text-xs text-muted-foreground uppercase tracking-wider">
                       <th className="text-center py-4 px-4 font-medium w-16 text-xs text-muted-foreground/60">#</th>
                       <th className="text-left py-4 px-4 font-medium w-auto min-w-[300px]">Repository</th>
                       <th className="text-left py-4 px-4 font-medium w-[200px] hidden md:table-cell">Developer</th>
-                      <th className="text-right py-4 px-4 font-medium w-[140px] whitespace-nowrap">Contributors <span className="text-xs text-muted-foreground font-normal sm:hidden lg:inline">(30d)</span></th>
                       <th className="text-right py-4 px-4 font-medium w-[120px] whitespace-nowrap">Commits <span className="text-xs text-muted-foreground font-normal sm:hidden lg:inline">(30d)</span></th>
                       <th className="text-right py-4 px-4 font-medium w-[100px] hidden sm:table-cell">Score</th>
                       <th className="text-right py-4 px-4 font-medium w-[100px] text-muted-foreground/60">Stars</th>
@@ -223,7 +251,7 @@ export default function Home() {
                   <tbody className="text-sm divide-y divide-border/5">
                     {loading ? (
                       <tr>
-                        <td colSpan={7} className="py-16 text-center text-muted-foreground">
+                        <td colSpan={6} className="py-16 text-center text-muted-foreground">
                           <div className="flex flex-col items-center gap-3">
                             <div className="h-5 w-5 rounded-full border-2 border-primary border-t-transparent animate-spin opacity-50" />
                             <span>Loading activity data...</span>
@@ -231,7 +259,7 @@ export default function Home() {
                         </td>
                       </tr>
                     ) : repos.length > 0 ? (
-                      repos.map((repo: any, idx: number) => {
+                      repos.slice(0, visibleCount).map((repo: any, idx: number) => {
                         return (
                           <tr 
                             key={repo.id} 
@@ -287,11 +315,6 @@ export default function Home() {
                                </div>
                             </td>
                             <td className="py-4 px-4 text-right">
-                               <div className="inline-flex items-center justify-end font-semibold">
-                                  {repo.recent_contributors_count || 0}
-                               </div>
-                            </td>
-                            <td className="py-4 px-4 text-right">
                                <span className="font-semibold text-foreground/90">{repo.recent_commits_count || 0}</span>
                             </td>
                              <td className="py-4 px-4 text-right hidden sm:table-cell">
@@ -308,7 +331,7 @@ export default function Home() {
                       })
                   ) : (
                     <tr>
-                      <td colSpan={6} className="py-16 text-center text-muted-foreground">
+                      <td colSpan={5} className="py-16 text-center text-muted-foreground">
                         <div className="flex flex-col items-center gap-2">
                            <p className="font-medium">No repositories yet</p>
                            <p className="text-xs opacity-70">Be the first to add one!</p>
@@ -325,12 +348,139 @@ export default function Home() {
                </p>
             </div>
           </div>
-
+          
+          {visibleCount < repos.length && (
+            <div className="mt-6 flex justify-center">
+              <Button 
+                variant="outline" 
+                onClick={() => setVisibleCount(prev => prev + 10)}
+                className="bg-card/50 hover:bg-card/80 border-border/40 shadow-sm"
+              >
+                Show 10 more
+              </Button>
+            </div>
+          )}
 
         </div>
       </main>
     </div>
   )
+}
+
+function ProjectCard({ project }: { project: any }) {
+  if (!project) return null;
+
+  return (
+    <div className="relative w-full h-[150px] bg-card/80 backdrop-blur-sm border border-border/40 rounded-xl p-4 flex flex-col justify-between shadow-sm hover:border-border/80 transition-colors cursor-pointer">
+      <Link href={`/repo/${project.owner}/${project.name}`} className="absolute inset-0 z-10" />
+      
+      <div className="flex items-start gap-4">
+        {project.image_url ? (
+          <div className="w-12 h-12 rounded-xl bg-muted relative overflow-hidden flex-shrink-0 border border-border/10">
+            <Image src={project.image_url} alt={project.name} fill className="object-cover" />
+          </div>
+        ) : (
+          <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center text-lg font-bold flex-shrink-0 border border-border/10">
+            {project.name[0].toUpperCase()}
+          </div>
+        )}
+        <div className="flex-1 min-w-0 pr-2 pt-0.5">
+          <h3 className="text-base font-semibold text-foreground truncate">{project.name}</h3>
+          <p className="text-xs text-muted-foreground line-clamp-1 opacity-80 mt-0.5">{project.description || 'No description'}</p>
+        </div>
+        <div className="flex-shrink-0 pt-0.5">
+           <span className="text-[9px] font-bold px-2 py-1 bg-amber-500/10 text-amber-500/90 rounded-md uppercase border border-amber-500/20 whitespace-nowrap">
+             NEW
+           </span>
+        </div>
+      </div>
+
+      <div className="flex items-end justify-between mt-4 px-1">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-[9px] text-muted-foreground font-semibold uppercase tracking-wider">Stars</span>
+          <span className="font-bold text-sm text-foreground/90">{project.stars?.toLocaleString() || 0}</span>
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <span className="text-[9px] text-muted-foreground font-semibold uppercase tracking-wider">Commits</span>
+          <span className="font-bold text-sm text-foreground/90">{project.recent_commits_count || 0}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FlippingProjectCard({ projects, interval = 5000, delay = 0 }: { projects: any[], interval?: number, delay?: number }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (!projects || projects.length <= 1) return;
+    
+    const timeout = setTimeout(() => {
+      const intervalId = setInterval(() => {
+        setCurrentIndex((prev) => (prev + 1) % projects.length);
+      }, interval);
+      return () => clearInterval(intervalId);
+    }, delay);
+
+    return () => clearTimeout(timeout);
+  }, [projects, interval, delay]);
+
+  if (!projects || projects.length === 0) return null;
+
+  const project = projects[currentIndex];
+
+  return (
+    <div className="relative w-full h-[150px] perspective-[1000px]">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={project.id || project.name}
+          initial={{ rotateY: 90, opacity: 0 }}
+          animate={{ rotateY: 0, opacity: 1 }}
+          exit={{ rotateY: -90, opacity: 0 }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
+          className="absolute inset-0 bg-card/80 backdrop-blur-sm border border-border/40 rounded-xl p-4 flex flex-col justify-between shadow-sm hover:border-border/80 transition-colors cursor-pointer"
+        >
+          <Link href={`/repo/${project.owner}/${project.name}`} className="absolute inset-0 z-10" />
+          
+          <div className="flex items-start gap-4">
+            {project.image_url ? (
+              <div className="w-12 h-12 rounded-xl bg-muted relative overflow-hidden flex-shrink-0 border border-border/10">
+                <Image src={project.image_url} alt={project.name} fill className="object-cover" />
+              </div>
+            ) : (
+              <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center text-lg font-bold flex-shrink-0 border border-border/10">
+                {project.name[0].toUpperCase()}
+              </div>
+            )}
+            <div className="flex-1 min-w-0 pr-2 pt-0.5">
+              <h3 className="text-base font-semibold text-foreground truncate">{project.name}</h3>
+              <p className="text-xs text-muted-foreground line-clamp-1 opacity-80 mt-0.5">{project.description || 'No description'}</p>
+            </div>
+            <div className="flex-shrink-0 pt-0.5">
+               <span className="text-[9px] font-bold px-2 py-1 bg-amber-500/10 text-amber-500/90 rounded-md uppercase border border-amber-500/20 whitespace-nowrap">
+                 NEW
+               </span>
+            </div>
+          </div>
+
+          <div className="flex items-end justify-between mt-4 px-1">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[9px] text-muted-foreground font-semibold uppercase tracking-wider">Stars</span>
+              <span className="font-bold text-sm text-foreground/90">{project.stars?.toLocaleString() || 0}</span>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[9px] text-muted-foreground font-semibold uppercase tracking-wider">Commits</span>
+              <span className="font-bold text-sm text-foreground/90">{project.recent_commits_count || 0}</span>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[9px] text-muted-foreground font-semibold uppercase tracking-wider">Contributors</span>
+              <span className="font-bold text-sm text-foreground/90">{project.recent_contributors_count || 0}</span>
+            </div>
+          </div>
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
 }
 
 function ChevronDown({ className }: { className?: string }) {

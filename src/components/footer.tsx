@@ -22,7 +22,7 @@ export default function Footer() {
   }
 
   return (
-    <footer className="pt-8 border-t flex flex-col sm:flex-row items-center justify-between gap-4">
+    <footer className="pt-8  border-t flex flex-col sm:flex-row items-center justify-between gap-4">
       <div className="text-xs text-muted-foreground">
         Built by <span className="font-semibold text-foreground">Chirag Gadhvi</span>
       </div>
